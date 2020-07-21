@@ -9,8 +9,8 @@ from typing import Optional, Union
 import pytz
 
 
-def check_internet(timeout: Union[float, int] = 10.0,
-                   log: logging.Logger = None) -> bool:
+def check_internet(log: logging.Logger, 
+                   timeout: Union[float, int] = 10.0) -> bool:
   """Check the internet connectivity."""
   # You can find the reference code here:
   # https://gist.github.com/yasinkuyu/aa505c1f4bbb4016281d7167b8fa2fc2

@@ -108,7 +108,7 @@ def upload_to_bucket(access_key: str,
     s3_name = os.path.join(directory, s3_name) if directory else s3_name
 
     while True:
-      if check_internet():
+      if check_internet(log):
         s3.upload_file(filename, bucket_name, s3_name,
                         ExtraArgs={'ACL': 'public-read',
                                   'ContentType': 'video/mp4'})
