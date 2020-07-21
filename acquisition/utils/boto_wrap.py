@@ -324,7 +324,6 @@ def create_glacier_vault(access_key: str,
 
 def upload_to_vault(access_key: str,
                     secret_key: str,
-                    account_id: str,
                     vault_name: str,
                     file_name: str,
                     log: logging.Logger = None,
