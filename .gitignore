@@ -11,7 +11,6 @@ __pycache__/
 build/
 develop-eggs/
 dist/
-downloads/
 eggs/
 .eggs/
 lib/
@@ -47,7 +46,6 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
-*.py,cover
 .hypothesis/
 .pytest_cache/
 
@@ -91,12 +89,8 @@ ipython_config.py
 #   install all needed dependencies.
 #Pipfile.lock
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow
-__pypackages__/
-
-# Celery stuff
+# celery beat schedule file
 celerybeat-schedule
-celerybeat.pid
 
 # SageMath parsed files
 *.sage.py
@@ -109,6 +103,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+virtualenv/
 
 # Spyder project settings
 .spyderproject
@@ -127,3 +122,24 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Ignored on-device directories
+.vscode/
+tests/
+backup/
+/video_processing_engine/config/
+docs/
+/*test
+/**/*_test.py
+
+# Ignored on-device files
+/models/res10_300x300_ssd_iter_140000.caffemodel
+/models/deploy.prototxt.txt
+/models/facial_landmarks.dat
+/models/frozen_east_text_detection.pb
+/video_processing_engine/run.py
+vpe.code-workspace
+logs/*.log
+live/*.mp4
+/**/*.mp4
+reports/*csv

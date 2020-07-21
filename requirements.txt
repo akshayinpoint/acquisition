@@ -1,0 +1,13 @@
+opencv-contrib-python
+imutils
+boto3
+autopep8
+pylint
+google-cloud-storage
+azure-storage-blob
+requests
+
+# sudo apt-get update
+# sudo apt-get install build-essential cmake
+# sudo apt-get install libopenblas-dev liblapack-dev 
+# sudo apt-get install libx11-dev libgtk-3-dev
