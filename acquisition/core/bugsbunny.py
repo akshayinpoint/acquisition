@@ -18,7 +18,7 @@ from app import models
 
 ROOT = "root"
 PUBLIC_ADDR = "161.35.6.215"
-PASSWORD = "235e3afee20ff13f1ea1ff0da0VPE2w"
+PASSWORD = "XAMES3"
 
 
 def calling_processing(json_obj: str, log: logging.Logger) -> bool:

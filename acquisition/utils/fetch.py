@@ -34,7 +34,9 @@ check_directory = re.compile("^(\/+\w{0,}){0,}$")
 DRIVE_DOWNLOAD_URL = 'https://docs.google.com/uc?export=download'
 # Chunk size
 CHUNK_SIZE = 32768
-
+# Credentials
+_AWS_ACCESS_KEY = 'XAMES3'
+_AWS_SECRET_KEY = 'XAMES3'
 
 def filename_from_url(public_url: str) -> str:
   """Returns filename from public url.
@@ -631,8 +633,7 @@ def batch_download_from_ftp(username: str,
       for _idx, _file in enumerate(ftp_files):
         list = []
         s3 = _file.split(download_path)[1]
-        url = upload_to_bucket('AKIAJNK6OOHHF2XWAQAQ',
-                               '5fsLHqFXxvdNYldOcez1gbK3JwNutf/u5/ZugCsp',
+        url = upload_to_bucket(_AWS_ACCESS_KEY, _AWS_SECRET_KEY,
                                'ftp-batch-downloaded-bucket', _file, log, s3)
         urls.append(url)
         list.append((_idx)+1)
