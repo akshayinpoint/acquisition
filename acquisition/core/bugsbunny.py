@@ -13,12 +13,16 @@ from acquisition.core.scoobydoo import live, stored
 from acquisition.utils.common import now
 from acquisition.utils.generate import bucket_name, order_name
 from acquisition.utils.uploads import push_to_client_ftp
+from acquisition.utils.boto_wrap import upload_to_bucket
 # pyright: reportMissingImports=false
 from app import models
 
-ROOT = "root"
-PUBLIC_ADDR = "161.35.6.215"
-PASSWORD = "XAMES3"
+_ROOT = "root"
+_PUBLIC_ADDR = "161.35.6.215"
+_PASSWORD = "XAMES3"
+
+_AWS_ACCESS_KEY = 'XAMES3'
+_AWS_SECRET_KEY = 'XAMES3'
 
 
 def calling_processing(json_obj: str, log: logging.Logger) -> bool:
@@ -34,8 +38,7 @@ def calling_processing(json_obj: str, log: logging.Logger) -> bool:
     #Production
     URL = 'http://161.35.6.215:9000/new_connection_order/'
 
-    response = requests.post(URL, json.dumps(json_obj), headers=header)
-    log.info(f'Response status: {response}')
+    requests.post(URL, json.dumps(json_obj), headers=header)
 
     return True
   except Exception as error:
@@ -79,29 +82,28 @@ def spin(json_obj: str,
     order = order_name(store, area, camera, current)
 
     log.info(f'Aquisition Engine loaded.')
-    log.info(f'Aquisition Engine started spinning for angle #{camera}.')
+    log.info(f'Aquisition Engine started spinning for angle #{camera}...')
 
     if use_archived:
-      log.info(f'Key JSON data: Customer ID: {customer}, Contract ID: '
-               f'{contract}, Order ID: {_order}, Store ID: {store}, Angle ID: '
-               f'{camera}, Source: {json_data["access_mode"]}, Scheduled: '
-               f'{json_data["sub_json"]["schedule_download"]}, '
-               f'Start time: {start_time}, End time: {end_time}.')
+      log.info(f'Received Customer ID: {customer}, Contract ID: {contract}, '
+               f'Order ID: {_order}, Store ID: {store}, Angle ID: {camera}, '
+               f'Source: {json_data["access_mode"]}, Start time: {start_time} '
+               f'and End time: {end_time}.')
       log.info('Aquisition mode selected: ARCHIVED')
       json_data['sub_json']['access_type'] = json_data['access_mode']
       json_data['sub_json']['earthcam_start_date'] = json_data['start_date']
       json_data['sub_json']['stored_filename'] = str(uuid4())
 
+      log.info('Aquiring downloaded video for processing this order...')
       _, org_file = stored(json_data['sub_json'], log)
-      log.info('Aquiring downloaded video for processing this order.')
     else:
-      log.info(f'Key JSON data: Customer ID: {customer}, Contract ID: '
-               f'{contract}, Order ID: {_order}, Store ID: {store}, Angle ID: '
-               f'{camera}, Source: {address}, Username: {username}, Password: '
-               f'{password}, Port: {port}, Start time: {start_time}, End time: '
-               f'{end_time}.')
+      log.info(f'Received Customer ID: {customer}, Contract ID: {contract}, '
+               f'Order ID: {_order}, Store ID: {store}, Angle ID: {camera}, '
+               f'Source: {address}, Username: {username}, Password: '
+               f'{password}, Port: {port}, Start time: {start_time} and '
+               f'End time: {end_time}.')
       log.info('Aquisition mode selected: LIVE')
-      log.info(f'Recording from camera #{camera} for this order.')
+      log.info(f'Recording from camera #{camera} for this order...')
       org_file = live(bucket, order, run_date, start_time, end_time, address,
                       username, password, port, timeout, log, timestamp)
 
@@ -110,7 +112,7 @@ def spin(json_obj: str,
       log.error('File not selected for processing.')
       return
 
-    log.info('Updating Event Milestone 01 - Video Acquisition.')
+    log.info('Updating Event Milestone 01 - Video Acquisition...')
     milestone_db = models.MilestoneStatus(work_status_id=db_pk,
                                           milestone_id=1)
     milestone_db.save()
@@ -121,20 +123,26 @@ def spin(json_obj: str,
     REMOTE_PATH = os.path.join("/opt/VPE2/bs_vpe/app/processing/videos",
                                TEMP_FILE)
     log.info(f'Moving {TEMP_FILE} file to processing server...')
-    push_to_client_ftp(ROOT, PASSWORD, PUBLIC_ADDR, org_file, REMOTE_PATH, log)
+    push_to_client_ftp(_ROOT, _PASSWORD, _PUBLIC_ADDR, org_file,
+                       REMOTE_PATH, log)
     json_data['org_file'] = REMOTE_PATH
-    json_data['db_pk'] = db_pk
-    json_data['vpe_unit'] = 'processing'
+    json_data['db_pk'] = db_pk # Unnecessary key-value pair.
 
     while True:
       trigger_status = calling_processing(json_data, log)
       if trigger_status:
+        log.info("Backing up the raw video source on cloud...")
+        upload_to_bucket(_AWS_ACCESS_KEY, _AWS_SECRET_KEY,
+                         "archived-order-uploads",
+                         org_file, log, directory=bucket)
         log.info('Trigger status: SUCCESSFULL')
+        os.remove(org_file)
         break
       else:
         log.error('Trigger status: FAILED')
         time.sleep(timeout)
-    log.info(f'Processing Engine ran for about {now() - start}.')
+
+    log.info(f'Acquisition Engine ran for about {now() - start}.')
   except KeyboardInterrupt:
     log.error('Spinner interrupted.')
   except Exception as error:
