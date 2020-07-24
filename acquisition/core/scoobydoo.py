@@ -42,8 +42,8 @@ def ffmpeg_str(source: str,
   timeout = float(camera_timeout)
   ffmpeg = 'ffmpeg.exe' if os.name == 'nt' else 'ffmpeg'
   return (f'{ffmpeg} -loglevel error -y -rtsp_transport tcp -i {source} '
-          f'-vcodec libx264 -acodec copy -t {duration} {file_name} '
-          f'-timeout {timeout}')
+          f'-vcodec copy -acodec copy -t {duration} -vcodec libx264 '
+          f'{file_name} -timeout {timeout}')
 
 
 def live(bucket_name: str,
