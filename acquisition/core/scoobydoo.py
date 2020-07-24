@@ -42,7 +42,7 @@ def ffmpeg_str(source: str,
   timeout = float(camera_timeout)
   ffmpeg = 'ffmpeg.exe' if os.name == 'nt' else 'ffmpeg'
   return (f'{ffmpeg} -loglevel error -y -rtsp_transport tcp -i {source} '
-          f'-vcodec copy -acodec copy -t {duration} {file_name} '
+          f'-vcodec libx264 -acodec copy -t {duration} {file_name} '
           f'-timeout {timeout}')
 
 
