@@ -94,9 +94,7 @@ def spin(json_obj: str,
     else:
       log.info(f'Received CST: {customer}, CNT: {contract}, '
                f'ODR: {_order}, STR: {store}, AGL: {camera}, '
-               f'SRC: {address}, USR: {username}, PWD: '
-               f'{password}, PRT: {port}, START: {start_time} and '
-               f'END: {end_time}.')
+               f'SRC: {address}, START: {start_time} and END: {end_time}.')
       log.info('Aquisition mode selected: LIVE')
       log.info(f'Recording from camera #{camera} for this order...')
       org_file = live(bucket, order, run_date, start_time, end_time, address,
@@ -113,28 +111,16 @@ def spin(json_obj: str,
     milestone_db.save()
     log.info('Event Milestone 01 - Video Acquisition: UPDATED')
 
-    # TODO(xames3): Delete the below snippet.
-    # Copy file to processer server
-    _ROOT = "root"
-    _PUBLIC_ADDR = "161.35.6.215"
-    _PASSWORD = "XAMES3"
-    from acquisition.utils.uploads import push_to_client_ftp
-    TEMP_FILE = os.path.basename(org_file)
-    REMOTE_PATH = os.path.join("/opt/VPE2/bs_vpe/app/processing/videos",
-                               TEMP_FILE)
-    log.info(f'Moving {TEMP_FILE} file to processing server...')
-    push_to_client_ftp(_ROOT, _PASSWORD, _PUBLIC_ADDR, org_file,
-                       REMOTE_PATH, log)
-    json_data['org_file'] = REMOTE_PATH
-    json_data['db_pk'] = db_pk  # Unnecessary key-value pair.
-
     while True:
+      log.info("Backing up the raw video on cloud...")
+      json_data['org_file'] = upload_to_bucket(_AWS_ACCESS_KEY,
+                                               _AWS_SECRET_KEY,
+                                               "archived-order-uploads",
+                                               org_file,
+                                               log,
+                                               directory=bucket)
       trigger_status = calling_processing(json_data, log)
       if trigger_status:
-        log.info("Backing up the raw video source on cloud...")
-        upload_to_bucket(_AWS_ACCESS_KEY, _AWS_SECRET_KEY,
-                         "archived-order-uploads", org_file, log,
-                         directory=bucket)
         log.info('Trigger status: SUCCESSFULL')
         os.remove(org_file)
         break
