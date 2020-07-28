@@ -39,7 +39,7 @@ def log(level: str = 'debug') -> logging.Logger:
   name = Path(os.path.abspath(sys.modules["__main__"].__file__)).stem
   name = f'{name}.log'
   name = Path(os.path.join(logs, name))
-  custom_format = ('%(asctime)s    %(levelname)-8s    %(threadName)-8s    '
+  custom_format = ('%(asctime)s %(levelname)-8s %(threadName)-8s  '
                    '%(filename)18s:%(lineno)04d  %(message)s')
   formatter = TimeFormatter(custom_format, '%Y-%m-%d %H:%M:%S.%F %Z')
   # Create log file.
