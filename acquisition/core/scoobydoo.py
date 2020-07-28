@@ -144,7 +144,8 @@ def stored(json_data: dict, log: logging.Logger):
     if json_data.get('access_type', None) == 'GCP':
       log.info('Downloading file via Google Drive...')
       _status, _file = download_from_google_drive(json_data['g_url'],
-                                                  json_data['stored_filename'], log)
+                                                  json_data['stored_filename'],
+                                                  log)
     elif json_data.get('access_type', None) == 'Microsoft':
       log.info('Downloading file via Microsoft Azure...')
       _status, _file = download_from_azure(json_data['azure_account_name'],
@@ -168,7 +169,8 @@ def stored(json_data: dict, log: logging.Logger):
          _status, _file = batch_download_from_ftp(json_data['p_name'],
                                                   json_data['p_pass'],
                                                   json_data['p_ip'],
-                                                  json_data['point_access'], log)
+                                                  json_data['point_access'],
+                                                  log)
     elif json_data.get('access_type', None) == 'S3':
       log.info('Downloading file via Amazon S3 storage...')
       _status, _file = access_file(json_data['s3_access_key'],
