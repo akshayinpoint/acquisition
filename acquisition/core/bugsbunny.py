@@ -12,14 +12,9 @@ import requests
 from acquisition.core.scoobydoo import live, stored
 from acquisition.utils.common import now
 from acquisition.utils.generate import bucket_name, order_name
-from acquisition.utils.uploads import push_to_client_ftp
 from acquisition.utils.boto_wrap import upload_to_bucket
 # pyright: reportMissingImports=false
 from app import models
-
-_ROOT = "root"
-_PUBLIC_ADDR = "161.35.6.215"
-_PASSWORD = "XAMES3"
 
 _AWS_ACCESS_KEY = 'XAMES3'
 _AWS_SECRET_KEY = 'XAMES3'
@@ -31,19 +26,19 @@ def calling_processing(json_obj: str, log: logging.Logger) -> bool:
     header = {'api-key': ('epVgnissecorP2020yjbadsdsa05jdagdsah22a'
                           'll0ahm0duil0lah03333fo0r33eve0ryt0hin0g')}
 
-    #UAT and Staging
-    #URL = 'http://64.227.0.147:9000/new_connection_order/'
-    #URL = 'http://127.0.0.1:9000/new_connection_order/'
+    # UAT and Staging
+    # URL = 'http://64.227.0.147:9000/new_connection_order/'
+    # URL = 'http://127.0.0.1:9000/new_connection_order/'
 
-    #Production
+    # Production
     URL = 'http://161.35.6.215:9000/new_connection_order/'
 
     requests.post(URL, json.dumps(json_obj), headers=header)
 
     return True
   except Exception as error:
-    log.exception(error)
     log.critical('Something went wrong while running calling_processing().')
+    log.exception(error)
     return False
 
 
@@ -85,10 +80,10 @@ def spin(json_obj: str,
     log.info(f'Aquisition Engine started spinning for angle #{camera}...')
 
     if use_archived:
-      log.info(f'Received Customer ID: {customer}, Contract ID: {contract}, '
-               f'Order ID: {_order}, Store ID: {store}, Angle ID: {camera}, '
-               f'Source: {json_data["access_mode"]}, Start time: {start_time} '
-               f'and End time: {end_time}.')
+      log.info(f'Received CST: {customer}, CNT: {contract}, '
+               f'ODR: {_order}, STR: {store}, AGL: {camera}, '
+               f'SRC: {json_data["access_mode"]}, START: {start_time} '
+               f'and END: {end_time}.')
       log.info('Aquisition mode selected: ARCHIVED')
       json_data['sub_json']['access_type'] = json_data['access_mode']
       json_data['sub_json']['earthcam_start_date'] = json_data['start_date']
@@ -97,11 +92,11 @@ def spin(json_obj: str,
       log.info('Aquiring downloaded video for processing this order...')
       _, org_file = stored(json_data['sub_json'], log)
     else:
-      log.info(f'Received Customer ID: {customer}, Contract ID: {contract}, '
-               f'Order ID: {_order}, Store ID: {store}, Angle ID: {camera}, '
-               f'Source: {address}, Username: {username}, Password: '
-               f'{password}, Port: {port}, Start time: {start_time} and '
-               f'End time: {end_time}.')
+      log.info(f'Received CST: {customer}, CNT: {contract}, '
+               f'ODR: {_order}, STR: {store}, AGL: {camera}, '
+               f'SRC: {address}, USR: {username}, PWD: '
+               f'{password}, PRT: {port}, START: {start_time} and '
+               f'END: {end_time}.')
       log.info('Aquisition mode selected: LIVE')
       log.info(f'Recording from camera #{camera} for this order...')
       org_file = live(bucket, order, run_date, start_time, end_time, address,
@@ -118,7 +113,12 @@ def spin(json_obj: str,
     milestone_db.save()
     log.info('Event Milestone 01 - Video Acquisition: UPDATED')
 
+    # TODO(xames3): Delete the below snippet.
     # Copy file to processer server
+    _ROOT = "root"
+    _PUBLIC_ADDR = "161.35.6.215"
+    _PASSWORD = "XAMES3"
+    from acquisition.utils.uploads import push_to_client_ftp
     TEMP_FILE = os.path.basename(org_file)
     REMOTE_PATH = os.path.join("/opt/VPE2/bs_vpe/app/processing/videos",
                                TEMP_FILE)
@@ -126,15 +126,15 @@ def spin(json_obj: str,
     push_to_client_ftp(_ROOT, _PASSWORD, _PUBLIC_ADDR, org_file,
                        REMOTE_PATH, log)
     json_data['org_file'] = REMOTE_PATH
-    json_data['db_pk'] = db_pk # Unnecessary key-value pair.
+    json_data['db_pk'] = db_pk  # Unnecessary key-value pair.
 
     while True:
       trigger_status = calling_processing(json_data, log)
       if trigger_status:
         log.info("Backing up the raw video source on cloud...")
         upload_to_bucket(_AWS_ACCESS_KEY, _AWS_SECRET_KEY,
-                         "archived-order-uploads",
-                         org_file, log, directory=bucket)
+                         "archived-order-uploads", org_file, log,
+                         directory=bucket)
         log.info('Trigger status: SUCCESSFULL')
         os.remove(org_file)
         break
@@ -142,12 +142,12 @@ def spin(json_obj: str,
         log.error('Trigger status: FAILED')
         time.sleep(timeout)
 
-    log.info(f'Acquisition Engine ran for about {now() - start}.')
+    log.info(f'Acquisition Engine took {now() - start} to acquire video.')
   except KeyboardInterrupt:
     log.error('Spinner interrupted.')
   except Exception as error:
-    log.exception(error)
     log.critical('Something went wrong while video processing was running.')
+    log.exception(error)
 
 
 def save_milestone(db_pk, stone_id) -> bool:
