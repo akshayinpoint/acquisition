@@ -67,9 +67,14 @@ def sheep(threads: threading.Semaphore, json_obj: dict, db_pk: int) -> None:
                                       timezone,
                                       '%Y-%m-%d %H:%M:%S')
         _start_obj = datetime.strptime(_start_time, '%Y-%m-%d %H:%M:%S')
-        _log.critical('Acquisition Engine is scheduled to start from '
-                      f'{_start_time} till {end_date.date()} for order '
-                      f'#{db_pk}.')
+
+        if now().date() < end_date.date():
+          _log.critical('Acquisition Engine is scheduled to start from '
+                        f'{_start_time} till {end_date.date()} for order '
+                        f'#{db_pk}.')
+        else:
+          pool.despawn(name)
+          _log.warning(f'Thread "{name}" released.')
 
         while now().date() < end_date.date():
           if str(now()) == str(_start_time):
