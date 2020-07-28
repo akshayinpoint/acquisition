@@ -42,7 +42,7 @@ def ffmpeg_str(source: str,
   timeout = float(camera_timeout)
   ffmpeg = 'ffmpeg.exe' if os.name == 'nt' else 'ffmpeg'
   return (f'{ffmpeg} -loglevel error -y -rtsp_transport tcp -i {source} '
-          f'-vcodec libx264 -acodec copy -t {duration} {file_name} '
+          f'-vcodec copy -acodec copy -t {duration} {file_name} '
           f'-timeout {timeout}')
 
 
@@ -172,10 +172,10 @@ def stored(json_data: dict, log: logging.Logger):
     elif json_data.get('access_type', None) == 'S3':
       log.info('Downloading file via Amazon S3 storage...')
       _status, _file = access_file(json_data['s3_access_key'],
-                                          json_data['s3_secret_key'],
-                                          json_data['s3_url'],
-                                          json_data['stored_filename'], log,
-                                          json_data['s3_bucket_name'])
+                                   json_data['s3_secret_key'],
+                                   json_data['s3_url'],
+                                   json_data['stored_filename'], log,
+                                   json_data['s3_bucket_name'])
     return _status, _file
   except Exception as error:
     log.exception(error)
