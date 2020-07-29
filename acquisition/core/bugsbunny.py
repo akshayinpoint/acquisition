@@ -113,6 +113,7 @@ def spin(json_obj: str,
 
     while True:
       log.info("Backing up the raw video on cloud...")
+      json_data['db_pk'] = db_pk
       json_data['org_file'] = upload_to_bucket(_AWS_ACCESS_KEY,
                                                _AWS_SECRET_KEY,
                                                "archived-order-uploads",
