@@ -16,6 +16,7 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from botocore.utils import calculate_tree_hash
 
 from acquisition.utils.common import check_internet, file_size
+from acquisition.utils.logs import log
 from acquisition.utils.paths import videos
 
 video_file_extensions = ('.3gp', '.mp4', '.avi', '.webm', '.divx', '.f4v',
@@ -483,8 +484,10 @@ def access_limited_files(access_key: str,
 
 def analyze_storage_consumed(access_key: str,
                              secret_key: str,
+                             log: logging.Logger,
                              customer_id: Union[int, str],
-                             log: logging.Logger) -> str:
+                             contract_id: Union[int, str] = None,
+                             order_id: Union[int, str] = None) -> str:
   """Analyze storage.
 
   Analyze storage consumed by the customer in GBs.
@@ -505,10 +508,18 @@ def analyze_storage_consumed(access_key: str,
     log.error('Wrong credentials used to access the AWS account.')
     return 'Error'
   else:
+    # pyright: reportGeneralTypeIssues=false
+    customer_id = f'{customer_id:>04}'
+    contract_id = f'{contract_id:>02}' if contract_id else None
+    order_id = f'{order_id:>02}' if order_id else None
+
+    log.debug(f'Calculating storage size used by "{customer_id}"...')
+
     all_buckets = [bucket.name for bucket in s3.buckets.all()]
-    all_customers = list(map(lambda x: x[2:6].isdigit()
-                             if len(x) == 10 else False,
+    all_customers = list(map(lambda x: x[2:].isdigit()
+                             if len(x) == 6 else False,
                              all_buckets))
+
     valid_customers = list(itertools.compress(all_buckets, all_customers))
     customers = [(idx[2:6], idx) for idx in valid_customers]
     customer = defaultdict(list)
@@ -517,10 +528,16 @@ def analyze_storage_consumed(access_key: str,
       customer[k].append(v)
 
     size = 0
-    log.info(f'Calculating storage size used by "{customer_id}"')
+    bucket = s3.Bucket(customer[customer_id][0])
 
-    for idx in customer[customer_id]:
-      bucket = s3.Bucket(idx)
-      for obj in bucket.objects.all():
+    for obj in bucket.objects.all():
+      if not contract_id:
         size += obj.size
-    return f'{round(size / 1000 / 1024 / 1024, 3)} GB'
+      elif contract_id and order_id:
+        if f'{customer_id}{contract_id}{order_id}' in obj.key:
+          size += obj.size
+      else:
+        if f'{customer_id}{contract_id}' in obj.key:
+          size += obj.size
+
+    return (size * 100) / 1e+12
