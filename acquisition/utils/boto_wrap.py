@@ -442,7 +442,7 @@ def access_limited_files(access_key: str,
                    for idx in all_files['Contents']
                    if not idx['Key'].endswith(video_file_extensions)]
     unsupported = list(set(map(lambda x: os.path.splitext(x)[1], unsupported)))
-    unsupported = [idx for idx in unsupported if idx is not '']
+    unsupported = [idx for idx in unsupported if idx != '']
 
     if len(unsupported) > 1:
       log.info(f'Unsupported video formats like "{unsupported[0]}", '
@@ -540,4 +540,4 @@ def analyze_storage_consumed(access_key: str,
         if f'{customer_id}{contract_id}' in obj.key:
           size += obj.size
 
-    return (size * 100) / 1e+12
+    return f'{round((size * 100) / 5e+12, 5)}'
